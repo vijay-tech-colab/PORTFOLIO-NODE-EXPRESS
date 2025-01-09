@@ -22,7 +22,7 @@ exports.register = catchAsyncErrors(async (req, res, next) => {
 
     // Extract avatar (image) from the request files
     const { avatar } = req.files;
-
+    console.log(avatar)
     // Validate required fields
     if (!name || !password || !email) {
         return next(new ErrorHandler('Please fill all the fields', 400)); // Send error if required fields are missing
@@ -74,4 +74,117 @@ exports.register = catchAsyncErrors(async (req, res, next) => {
 
     // Send token as a response for authentication purposes
     sendToken(user, 201, res);
+});
+
+// Login an existing user
+exports.login = catchAsyncErrors(async (req, res, next) => {
+    // Extract email and password from the request body
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+        return next(new ErrorHandler('Please enter email and password', 400)); // Send error if required fields are missing
+    }
+
+    // Find user by email in the database
+    const user = await User.findOne({ email }).select('+password');
+
+    // Check if user exists and password is correct
+    if (!user || !(await user.comparePassword(password))) {
+        return next(new ErrorHandler('Invalid email or password', 401)); // Send error if user does not exist or password is incorrect
+    }
+
+    // Send token as a response for authentication purposes 
+    sendToken(user, 200, res);
+});
+
+// Logout a user
+exports.logout = catchAsyncErrors(async (req, res, next) => {
+    res.cookie('token', '', {
+        expires : new Date(Date.now()),
+        httpOnly: true
+    }).status(200).json({
+        success: true,
+        message: 'Logged out successfully'
+    });
+});
+
+// Update user profile
+exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
+    // Initialize an empty object to hold the new user data
+    const newUserData = {};
+    
+    // Destructure fields from the request body
+    const {
+        name,
+        email,
+        password, // Consider removing or handling this separately as passwords are sensitive
+        bio,
+        linkedin,
+        github,
+        twitter,
+        portfolio,
+        phone,
+        address
+    } = req.body;
+
+    // Add fields to newUserData if they are provided in the request body
+    if (name) newUserData.name = name;
+    if (email) newUserData.email = email;
+    if (bio) newUserData.bio = bio;
+    if (linkedin) newUserData.linkedin = linkedin;
+    if (github) newUserData.github = github;
+    if (twitter) newUserData.twitter = twitter;
+    if (portfolio) newUserData.portfolio = portfolio;
+
+    // Ensure nested fields (like contact) exist before updating
+    if (phone || address) {
+        newUserData.contact = {}; // Initialize the contact object if it doesn't exist
+        if (phone) newUserData.contact.phone = phone;
+        if (address) newUserData.contact.address = address;
+    }
+
+    // Update the user document in the database
+    const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+        new: true, // Return the updated user document
+        runValidators: true, // Validate the new data before updating
+        useFindAndModify: false // Prevent deprecated warnings in Mongoose
+    });
+
+    // Return a success response with the updated user information
+    res.status(200).json({
+        success: true,
+        message: 'Profile updated successfully',
+        user
+    });
+});
+
+// Get user profile
+exports.getUserProfile = catchAsyncErrors(async (req, res, next) => {
+    // Find the user by ID in the database
+    const user = await User.findById(req.user.id);
+    if(!user) {
+        return next(new ErrorHandler('User not found', 404));
+    }
+    res.status(200).json({
+        success: true,
+        user
+    });
+});
+
+exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
+    // Find the user by ID in the database
+    const {oldPassword, newPassword} = req.body;
+    const user = await User.findById(req.user.id).select('+password');
+    // Check if the current password is correct
+    const isMatched = await user.comparePassword(oldPassword);
+    if(!isMatched) {
+        return next(new ErrorHandler('Old password is incorrect', 400));
+    }
+    user.password = newPassword
+    await user.save();
+    res.status(200).json({
+        success: true,
+        message: 'Password updated successfully'
+    });
 });
