@@ -3,6 +3,8 @@ const ErrorHandler = require("../middleware/errorClass"); // Custom error handle
 const User = require('../models/userSchema'); // Mongoose schema for the User model
 const sendToken = require('../utils/sendToken'); // Utility to send JWT token to the user
 const cloudinary = require('cloudinary').v2; // Cloudinary module for image upload
+const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail'); // Utility to send emails
 
 // Register a new user
 exports.register = catchAsyncErrors(async (req, res, next) => {
@@ -111,14 +113,13 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
 
 // Update user profile
 exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
+    const specificUser = await User.findById(req.user.id).select("+password"); // Find the user by ID in the database
     // Initialize an empty object to hold the new user data
     const newUserData = {};
-    
     // Destructure fields from the request body
     const {
         name,
         email,
-        password, // Consider removing or handling this separately as passwords are sensitive
         bio,
         linkedin,
         github,
@@ -137,6 +138,28 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
     if (twitter) newUserData.twitter = twitter;
     if (portfolio) newUserData.portfolio = portfolio;
 
+    if (req.files && req.files.avatar) {
+        const avatar = req.files.avatar; // Get the avatar file
+        if (avatar.size > process.env.MAX_FILE_UPLOAD) {
+            return next(new ErrorHandler('Please upload an image less than 1MB', 400));
+        }
+    
+        // Destroy the existing avatar from Cloudinary
+        if (specificUser.avatar && specificUser.avatar.public_id) {
+            await cloudinary.uploader.destroy(specificUser.avatar.public_id);
+        }
+    
+        // Upload the new avatar to Cloudinary
+        const result = await cloudinary.uploader.upload(avatar.tempFilePath, {
+            folder: 'AVATAR'
+        });
+    
+        newUserData.avatar = {
+            public_id: result.public_id,
+            url: result.secure_url
+        };
+    }
+     
     // Ensure nested fields (like contact) exist before updating
     if (phone || address) {
         newUserData.contact = {}; // Initialize the contact object if it doesn't exist
