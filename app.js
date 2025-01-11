@@ -5,6 +5,7 @@ const fileUpload = require('express-fileupload');
 const cookieParser = require('cookie-parser');
 const errorMiddleware = require('./middleware/errorMiddleWare');
 const cors = require('cors');
+const skillRouter = require('./routers/skillRouter');
 require('dotenv').config({path : "./config/config.env"});
 
 app.use(express.json());
@@ -23,7 +24,7 @@ app.use(fileUpload({
 }));
 
 app.use('/api/v1/users',userRouter);
-
+app.use('/api/v1/skill',skillRouter);
 app.use(errorMiddleware);
 
 module.exports = app
