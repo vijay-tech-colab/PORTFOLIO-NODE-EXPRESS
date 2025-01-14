@@ -1,12 +1,15 @@
 const express = require('express');
 const app = express();
-const userRouter = require("./routers/userRouter")
 const fileUpload = require('express-fileupload');
 const cookieParser = require('cookie-parser');
 const errorMiddleware = require('./middleware/errorMiddleWare');
-const cors = require('cors');
-const skillRouter = require('./routers/skillRouter');
 require('dotenv').config({path : "./config/config.env"});
+const cors = require('cors');
+
+const userRouter = require("./routers/userRouter")
+const skillRouter = require('./routers/skillRouter');
+const projectRouter = require('./routers/projectRouter');
+const messageRouter = require('./routers/messageRouter');
 
 app.use(express.json());
 app.use(express.urlencoded({extended : true}));
@@ -25,6 +28,8 @@ app.use(fileUpload({
 
 app.use('/api/v1/users',userRouter);
 app.use('/api/v1/skill',skillRouter);
+app.use('/api/v1/project',projectRouter);
+app.use('/api/v1/message',messageRouter);
 app.use(errorMiddleware);
 
 module.exports = app

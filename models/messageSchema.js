@@ -17,7 +17,7 @@ const messageSchema = new mongoose.Schema({
             message: (props) => `${props.value} is not a valid email!`,
         },
     },
-    content: {
+    message : {
         type: String, // Message content
         required: true,
         trim: true,

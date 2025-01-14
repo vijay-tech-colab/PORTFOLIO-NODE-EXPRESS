@@ -14,6 +14,16 @@ const projectSchema = new mongoose.Schema({
         type: String, // Live project link
         trim: true,
     },
+    projectIcon : {
+        public_id : {
+            type : String,
+            required : true
+        },
+        url : {
+            type : String,
+            required : true
+        }
+    },
     repoLink: {
         type: String, // GitHub repo link
         trim: true,
