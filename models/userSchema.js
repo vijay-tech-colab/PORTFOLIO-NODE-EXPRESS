@@ -40,13 +40,8 @@ const userSchema = new mongoose.Schema({
         phone: { type: String, trim: true },
         address: { type: String, trim: true },
     },
-    resetToken: {
-        type: String,
-        trim: true,
-    },
-    expireToken: {
-        type: Date,
-    },
+    resetPasswordToken : String,
+    resetPasswordExpires : Date,
     createdAt: {
         type: Date,
         default: Date.now,

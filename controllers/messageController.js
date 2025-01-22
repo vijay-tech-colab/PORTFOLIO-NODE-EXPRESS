@@ -1,6 +1,7 @@
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ErrorHandler = require("../middleware/errorClass");
 const Message = require("../models/messageSchema");
+const sendEmail = require("../utils/sendEmail");
 
 // Controller to send a new message
 exports.sendMessages = catchAsyncErrors(async (req, res, next) => {
@@ -17,6 +18,20 @@ exports.sendMessages = catchAsyncErrors(async (req, res, next) => {
         senderEmail,
         message
     });
+
+    let mailOptions = {
+        from: newMessage.senderEmail,
+        to: process.env.EMAIL_USER,
+        subject: 'Thank You for Reaching Out!',  // Subject of the email
+        text: 'Hello, thank you for reaching out to us! Your message has been successfully received. We value your interest and will get back to you as soon as possible. In the meantime, feel free to explore more about us on our website. Have a great day!',  // Plain text body
+        html: `
+        <p>Hello,</p>
+        <p>Thank you for reaching out to us! Your message has been <strong>successfully received</strong>.</p>
+        <p>We truly appreciate your interest and will respond to you as soon as possible. In the meantime, feel free to <a href="https://yourwebsite.com" target="_blank">explore more about us</a>.</p>
+        <p>If you have any further questions, don't hesitate to contact us directly.</p>`  // HTML body
+    };
+
+    await sendEmail(mailOptions);
 
     // Respond with success status and the created message
     res.status(201).json({
