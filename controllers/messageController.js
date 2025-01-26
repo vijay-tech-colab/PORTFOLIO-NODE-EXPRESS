@@ -3,6 +3,7 @@ const ErrorHandler = require("../middleware/errorClass");
 const Message = require("../models/messageSchema");
 const sendEmail = require("../utils/sendEmail");
 
+
 // Controller to send a new message
 exports.sendMessages = catchAsyncErrors(async (req, res, next) => {
     const { sender, senderEmail, message } = req.body;
@@ -39,6 +40,7 @@ exports.sendMessages = catchAsyncErrors(async (req, res, next) => {
         message: newMessage
     });
 });
+
 
 // Controller to get paginated messages
 exports.getMessages = catchAsyncErrors(async (req, res, next) => {

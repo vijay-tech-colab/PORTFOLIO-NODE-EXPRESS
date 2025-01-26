@@ -5,7 +5,7 @@ const sendToken = require('../utils/sendToken'); // Utility to send JWT token to
 const cloudinary = require('cloudinary').v2; // Cloudinary module for image upload
 const crypto = require('crypto'); // Node.js module for cryptographic operations
 const sendEmail = require('../utils/sendEmail'); // Utility to send emails
-
+const { validationResult } = require('express-validator');
 // Register a new user
 exports.register = catchAsyncErrors(async (req, res, next) => {
     // Extract fields from the request body
@@ -24,7 +24,6 @@ exports.register = catchAsyncErrors(async (req, res, next) => {
 
     // Extract avatar (image) from the request files
     const { avatar } = req.files;
-    console.log(avatar); // Log the avatar object for debugging
 
     // Validate required fields
     if (!name || !password || !email) {
@@ -45,8 +44,6 @@ exports.register = catchAsyncErrors(async (req, res, next) => {
     const result = await cloudinary.uploader.upload(avatar.tempFilePath, {
         folder: 'AVATAR', // Specify the folder in Cloudinary where avatars will be stored
     });
-
-    console.log("result ", result); // Log the Cloudinary response for debugging
 
     // Check if the upload was successful
     if (!result) {
@@ -81,7 +78,6 @@ exports.register = catchAsyncErrors(async (req, res, next) => {
 exports.login = catchAsyncErrors(async (req, res, next) => {
     // Extract email and password from the request body
     const { email, password } = req.body;
-
     // Validate required fields
     if (!email || !password) {
         return next(new ErrorHandler('Please enter email and password', 400)); // Send error if required fields are missing
@@ -232,7 +228,6 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 
     // Generate a reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    console.log(resetToken); // Log the reset token for debugging
     // Hash the reset token
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 

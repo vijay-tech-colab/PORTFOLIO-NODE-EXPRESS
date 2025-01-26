@@ -19,7 +19,6 @@ exports.postSkill = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("All fields are required", 400));
     }
 
-    console.log(req.files);
     const { skillIcon } = req.files;
 
     // Validate skill icon file

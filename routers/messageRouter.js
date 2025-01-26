@@ -3,9 +3,14 @@ const { getMessages, sendMessages, deleteAllMessages, getMessageById, deleteMess
 const authMiddleware = require('../middleware/authMiddleware');
 const messageRouter = express.Router();
 
-messageRouter.get('/all-messages',authMiddleware,getMessages);
+messageRouter.get('/all-messages',getMessages);
+
 messageRouter.post('/send-message',sendMessages);
+
 messageRouter.delete('/delete-all-messages',authMiddleware,deleteAllMessages);
+
 messageRouter.get('/get-message/:id',authMiddleware,getMessageById);
+
 messageRouter.delete('/delete-message/:id',authMiddleware,deleteMessage);
+
 module.exports = messageRouter;

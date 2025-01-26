@@ -6,9 +6,9 @@ const projectRouter = express.Router();
 // Define your routes here
 projectRouter.post('/add-project', authMiddleware, addProject);
 
-projectRouter.get('/get-projects', authMiddleware, getProjects);
+projectRouter.get('/get-projects', getProjects);
 
-projectRouter.get('/get-project/:id', authMiddleware, getProject);
+projectRouter.get('/get-project/:id', getProject);
 
 projectRouter.put('/update-project/:id', authMiddleware, updateProject);
 
