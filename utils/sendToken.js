@@ -9,9 +9,7 @@ const sendToken = async (user, statusCode, res) => {
         expires: new Date(
             Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
         ),
-        httpOnly: true,
-        // secure:true,  // Use HTTPS only in production
-        // sameSite: 'strict', // Prevent cross-site request forgery
+        httpOnly: true
     };
 
     let mailOptions = {

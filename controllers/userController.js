@@ -5,7 +5,6 @@ const sendToken = require('../utils/sendToken'); // Utility to send JWT token to
 const cloudinary = require('cloudinary').v2; // Cloudinary module for image upload
 const crypto = require('crypto'); // Node.js module for cryptographic operations
 const sendEmail = require('../utils/sendEmail'); // Utility to send emails
-const { validationResult } = require('express-validator');
 // Register a new user
 exports.register = catchAsyncErrors(async (req, res, next) => {
     // Extract fields from the request body
@@ -94,9 +93,7 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
         expires: new Date(
             Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
         ),
-        httpOnly: true,
-        secure:true,  // Use HTTPS only in production
-        sameSite: 'strict', // Prevent cross-site request forgery
+        httpOnly: true
     };
     // Create token
     const token = user.getSignedJwtToken();
