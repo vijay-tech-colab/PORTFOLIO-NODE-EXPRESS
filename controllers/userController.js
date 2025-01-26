@@ -93,14 +93,18 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
         expires: new Date(
             Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
         ),
-        httpOnly: true
+        httpOnly: true,
+        secure: true,    // Localhost ke liye false, production me true (HTTPS)
+        sameSite: 'Lax',  // CSRF protection
     };
+
     // Create token
     const token = user.getSignedJwtToken();
     // Send token as a response for authentication purposes 
-    res.cookie("token",token, options).status(200).json({
+    res.status(200).cookie("token",token, options).json({
         success: true,
-        message: 'login successfully'
+        message: 'login successfully',
+        token
     });
 });
 
