@@ -90,9 +90,18 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     if (!user || !(await user.comparePassword(password))) {
         return next(new ErrorHandler('Invalid email or password', 401)); // Send error if user does not exist or password is incorrect
     }
-
+    const options = {
+        expires: new Date(
+            Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+        ),
+        httpOnly: true,
+        secure:true,  // Use HTTPS only in production
+        sameSite: 'strict', // Prevent cross-site request forgery
+    };
+    // Create token
+    const token = user.getSignedJwtToken();
     // Send token as a response for authentication purposes 
-    res.status(200).json({
+    res.cookie("token",token, options).status(200).json({
         success: true,
         message: 'login successfully'
     });

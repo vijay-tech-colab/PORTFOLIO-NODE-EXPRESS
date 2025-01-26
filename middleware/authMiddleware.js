@@ -3,6 +3,7 @@ const ErrorHandler = require('./errorClass');
 
 const authMiddleware = (req, res, next) => {
     const token = req.cookies.token;
+    console.log(token);
     if(!token){
         return next(new ErrorHandler('No token provided', 401));
     }
