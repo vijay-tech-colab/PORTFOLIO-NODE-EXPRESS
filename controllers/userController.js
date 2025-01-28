@@ -94,8 +94,8 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
             Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
         ),
         httpOnly: true,
-        secure: true,    // Localhost ke liye false, production me true (HTTPS)
-        sameSite: 'Lax',  // CSRF protection
+        secure: process.env.NODE_ENV === "production", // HTTPS for production
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // Cross-origin safe
     };
 
     // Create token
