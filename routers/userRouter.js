@@ -8,7 +8,8 @@ const {
     updateProfile, 
     updatePassword,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    getAdminData
 } = require("../controllers/userController");
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -18,6 +19,8 @@ const userRouter = express.Router(); // Create a new router object
 userRouter.post('/register', register); // Register a new user
 
 userRouter.post('/login',login); // Login a user
+
+userRouter.get('/get-admin-data',getAdminData)
 
 userRouter.post('/logout',authMiddleware,logout); // Logout a user
 

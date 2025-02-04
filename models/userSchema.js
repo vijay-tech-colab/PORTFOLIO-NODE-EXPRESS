@@ -32,6 +32,16 @@ const userSchema = new mongoose.Schema({
             trim: true 
         },
     },
+    resume : {
+        public_id: { 
+            type: String, 
+            trim: true 
+        },
+        url: {
+            type: String, 
+            trim: true 
+        },
+    },
     linkedin: { type: String, trim: true },
     github: { type: String, trim: true },
     twitter: { type: String, trim: true },

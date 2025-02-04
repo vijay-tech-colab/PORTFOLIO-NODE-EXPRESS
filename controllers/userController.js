@@ -7,7 +7,6 @@ const crypto = require('crypto'); // Node.js module for cryptographic operations
 const sendEmail = require('../utils/sendEmail'); // Utility to send emails
 // Register a new user
 exports.register = catchAsyncErrors(async (req, res, next) => {
-    // Extract fields from the request body
     const {
         name,
         email,
@@ -21,35 +20,51 @@ exports.register = catchAsyncErrors(async (req, res, next) => {
         address
     } = req.body;
 
-    // Extract avatar (image) from the request files
-    const { avatar } = req.files;
+    const { avatar, resume } = req.files;
 
-    // Validate required fields
     if (!name || !password || !email) {
-        return next(new ErrorHandler('Please fill all the fields', 400)); // Send error if required fields are missing
+        return next(new ErrorHandler('Please fill all the fields', 400));
     }
 
-    // Validate avatar presence and structure
-    if (!avatar || Object.keys(req.files).length === 0 || Object.keys(avatar).length === 0) {
-        return next(new ErrorHandler('Please upload an avatar', 400)); // Send error if no avatar is uploaded
+    try {
+        if (!avatar || Object.keys(req.files).length === 0 || Object.keys(avatar).length === 0) {
+            return next(new ErrorHandler('Please upload an avatar', 400));
+        }
+    
+        if (avatar.size > process.env.MAX_FILE_UPLOAD) {
+            return next(new ErrorHandler('Please upload an image less than 1MB', 400));
+        }
+    
+        const avatarResult = await cloudinary.uploader.upload(avatar.tempFilePath, {
+            folder: 'AVATAR',
+        });
+    
+        if (!avatarResult) {
+            return next(new ErrorHandler('Something went wrong while uploading image', 500));
+        }
+    
+        if (!resume || Object.keys(req.files).length === 0 || Object.keys(resume).length === 0) {
+            return next(new ErrorHandler('Please upload a resume', 400));
+        }
+        if (resume.mimetype !== "application/pdf") {
+            return next(new ErrorHandler("Only PDF files are allowed",400));
+        }
+    
+        if (resume.size > process.env.MAX_FILE_UPLOAD) {
+            return next(new ErrorHandler('Please upload an image less than 1MB', 400));
+        }
+    
+        const resumeResult = await cloudinary.uploader.upload(resume.tempFilePath, {
+            folder: 'RESUME',
+        });
+    
+        if (!resumeResult) {
+            return next(new ErrorHandler('Something went wrong while uploading resume', 500));
+        }
+    } catch (error) {
+        console.log(error);
     }
 
-    // Validate avatar file size
-    if (avatar.size > process.env.MAX_FILE_UPLOAD) {
-        return next(new ErrorHandler('Please upload an image less than 1MB', 400)); // Send error if file size exceeds limit
-    }
-
-    // Upload avatar to Cloudinary
-    const result = await cloudinary.uploader.upload(avatar.tempFilePath, {
-        folder: 'AVATAR', // Specify the folder in Cloudinary where avatars will be stored
-    });
-
-    // Check if the upload was successful
-    if (!result) {
-        return next(new ErrorHandler('Something went wrong while uploading image', 500)); // Send error if upload fails
-    }
-
-    // Create a new user in the database
     const user = await User.create({
         name,
         email,
@@ -61,17 +76,21 @@ exports.register = catchAsyncErrors(async (req, res, next) => {
         portfolio,
         contact: {
             phone,
-            address, // Store contact details as a nested object
+            address,
         },
         avatar: {
-            public_id: result.public_id, // Store public ID from Cloudinary
-            url: result.secure_url, // Store secure URL from Cloudinary
+            public_id: avatarResult.public_id,
+            url: avatarResult.secure_url,
+        },
+        resume:  {
+            public_id: resumeResult.public_id,
+            url: resumeResult.secure_url,
         }
     });
 
-    // Send token as a response for authentication purposes
     sendToken(user, 201, res);
 });
+
 
 // Login an existing user
 exports.login = catchAsyncErrors(async (req, res, next) => {
@@ -105,6 +124,17 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
         success: true,
         message: 'login successfully',
         token
+    });
+});
+
+exports.getAdminData = catchAsyncErrors(async(red,res,next) => {
+    const adminData = await User.findOne();
+    if(!adminData){
+        return next(new ErrorHandler("UserData not found ",400));
+    }
+    res.status(200).json({
+        success: true,
+        adminData
     });
 });
 
@@ -164,6 +194,29 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
         });
 
         newUserData.avatar = {
+            public_id: result.public_id, // Store public ID from Cloudinary
+            url: result.secure_url // Store secure URL from Cloudinary
+        };
+    }
+
+    // Check if resume is provided in the request files
+    if (req.files && req.files.resume) {
+        const resume = req.files.resume; // Get the resume file
+        if (resume.size > process.env.MAX_FILE_UPLOAD) {
+            return next(new ErrorHandler('Please upload an image less than 1MB', 400)); // Send error if file size exceeds limit
+        }
+
+        // Destroy the existing resume from Cloudinary
+        if (specificUser.resume && specificUser.resume.public_id) {
+            await cloudinary.uploader.destroy(specificUser.resume.public_id);
+        }
+
+        // Upload the new resume to Cloudinary
+        const result = await cloudinary.uploader.upload(resume.tempFilePath, {
+            folder: 'RESUME', // Specify the folder in Cloudinary where resumes will be stored             
+        });
+
+        newUserData.resume = {
             public_id: result.public_id, // Store public ID from Cloudinary
             url: result.secure_url // Store secure URL from Cloudinary
         };
