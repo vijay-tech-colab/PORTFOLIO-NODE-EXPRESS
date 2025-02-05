@@ -60,6 +60,7 @@ exports.getProjects = catchAsyncErrors(async (req, res, next) => {
         success: true,
         totalProjects,
         currentPage: page,
+        totalPages: Math.ceil(totalSkills / limit),
         projects
     });
 });
