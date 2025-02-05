@@ -49,7 +49,7 @@ exports.addProject = catchAsyncErrors(async (req, res, next) => {
 
 // Get all projects with pagination
 exports.getProjects = catchAsyncErrors(async (req, res, next) => {
-    const limit = parseInt(req.query.limit) || 6;
+    const limit = parseInt(req.query.limit) || 4;
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * limit;
     const totalProjects = await Project.countDocuments();
@@ -60,7 +60,7 @@ exports.getProjects = catchAsyncErrors(async (req, res, next) => {
         success: true,
         totalProjects,
         currentPage: page,
-        totalPages: Math.ceil(totalSkills / limit),
+        totalPages: Math.ceil(totalProjects / limit),
         projects
     });
 });
