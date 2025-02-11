@@ -21,8 +21,8 @@ exports.sendMessages = catchAsyncErrors(async (req, res, next) => {
     });
 
     let mailOptions = {
-        from: newMessage.senderEmail,
-        to: process.env.EMAIL_USER,
+        from: process.env.EMAIL_USER,
+        to : newMessage.senderEmail,
         subject: 'Thank You for Reaching Out!',  // Subject of the email
         text: 'Hello, thank you for reaching out to us! Your message has been successfully received. We value your interest and will get back to you as soon as possible. In the meantime, feel free to explore more about us on our website. Have a great day!',  // Plain text body
         html: `
