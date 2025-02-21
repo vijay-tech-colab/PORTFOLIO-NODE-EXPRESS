@@ -20,76 +20,73 @@ exports.register = catchAsyncErrors(async (req, res, next) => {
         address
     } = req.body;
 
-    const { avatar, resume } = req.files;
+    const { avatar, resume } = req.files || {};
 
     if (!name || !password || !email) {
-        return next(new ErrorHandler('Please fill all the fields', 400));
+        return next(new ErrorHandler('Name, email, and password are required', 400));
+    }
+
+    if (!avatar) {
+        return next(new ErrorHandler('Please upload an avatar', 400));
+    }
+    if (!resume) {
+        return next(new ErrorHandler('Please upload a resume', 400));
     }
 
     try {
-        if (!avatar || Object.keys(req.files).length === 0 || Object.keys(avatar).length === 0) {
-            return next(new ErrorHandler('Please upload an avatar', 400));
-        }
-    
+        // Avatar validation
         if (avatar.size > process.env.MAX_FILE_UPLOAD) {
-            return next(new ErrorHandler('Please upload an image less than 1MB', 400));
+            return next(new ErrorHandler('Avatar must be less than 1MB', 400));
         }
-    
-        const avatarResult = await cloudinary.uploader.upload(avatar.tempFilePath, {
-            folder: 'AVATAR',
-        });
-    
-        if (!avatarResult) {
-            return next(new ErrorHandler('Something went wrong while uploading image', 500));
+
+        const avatarResult = await cloudinary.uploader.upload(avatar.tempFilePath, { folder: 'AVATAR' });
+
+        if (!avatarResult?.secure_url) {
+            return next(new ErrorHandler('Failed to upload avatar', 500));
         }
-    
-        if (!resume || Object.keys(req.files).length === 0 || Object.keys(resume).length === 0) {
-            return next(new ErrorHandler('Please upload a resume', 400));
-        }
+
+        // Resume validation
         if (resume.mimetype !== "application/pdf") {
-            return next(new ErrorHandler("Only PDF files are allowed",400));
+            return next(new ErrorHandler("Only PDF files are allowed for resume", 400));
         }
-    
         if (resume.size > process.env.MAX_FILE_UPLOAD) {
-            return next(new ErrorHandler('Please upload an image less than 1MB', 400));
+            return next(new ErrorHandler('Resume must be less than 1MB', 400));
         }
-    
-        const resumeResult = await cloudinary.uploader.upload(resume.tempFilePath, {
-            folder: 'RESUME',
+
+        const resumeResult = await cloudinary.uploader.upload(resume.tempFilePath, { folder: 'RESUME' });
+
+        if (!resumeResult?.secure_url) {
+            return next(new ErrorHandler('Failed to upload resume', 500));
+        }
+
+        // Create user
+        const user = await User.create({
+            name,
+            email,
+            password,
+            bio,
+            linkedin,
+            github,
+            twitter,
+            portfolio,
+            contact: { phone, address },
+            avatar: {
+                public_id: avatarResult.public_id,
+                url: avatarResult.secure_url,
+            },
+            resume: {
+                public_id: resumeResult.public_id,
+                url: resumeResult.secure_url,
+            },
         });
-    
-        if (!resumeResult) {
-            return next(new ErrorHandler('Something went wrong while uploading resume', 500));
-        }
+
+        sendToken(user, 201, res);
     } catch (error) {
-        console.log(error);
+        console.error("Registration Error:", error);
+        return next(new ErrorHandler('Server error while processing request', 500));
     }
-
-    const user = await User.create({
-        name,
-        email,
-        password,
-        bio,
-        linkedin,
-        github,
-        twitter,
-        portfolio,
-        contact: {
-            phone,
-            address,
-        },
-        avatar: {
-            public_id: avatarResult.public_id,
-            url: avatarResult.secure_url,
-        },
-        resume:  {
-            public_id: resumeResult.public_id,
-            url: resumeResult.secure_url,
-        }
-    });
-
-    sendToken(user, 201, res);
 });
+
 
 
 // Login an existing user
